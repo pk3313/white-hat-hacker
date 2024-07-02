@@ -116,5 +116,63 @@ def client_sender(buffer):
         # 연결 종료 
         client.close()            
                     
-                                                                   
+def server_loof():
+    global target
     
+    #타깃을 지정하지 않았다면 모든 인터페이스에서 리스닝
+    if not len(target):
+        target = '0.0.0.0' 
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((target,port))
+    server.listen(5)
+    
+    while True:
+        client_socket, addr = server.accept()
+        
+        #새 클라이언트를 처리할 스레드 생성
+        client_thread = threading.Thread(target=client_handler, args=(client_socket,))
+        client_thread.start()                                                                      
+    
+def run_command(command):
+    # 새 줄 문자 제거 
+    command = command.rstrip()
+    
+    #명령을 실행하고 출력 결과를 기져옴
+    try:
+        output= subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
+    except:
+        output= "Failed to execute command. \r\n"
+    #출력을 클라이언트에게 전송
+    return output
+
+def client_handler(client_socket):
+    global upload
+    global execute
+    global command
+    
+    # 업로드 대상 경로 지정 여부 확인
+    if len(upload_destination):
+        
+        #모든 바이트를 읽으면서 대상 경로에 기록
+        file_buffer = " "
+        
+        #데이터가 더 이상 없을 때까지 읽기
+        while True:
+            data = client_socket.recv(1024)
+            
+            if not data:
+                break
+            else:
+                file_buffer += data
+        # 읽어들인 바이트를 대상 경로에 쓰기
+        try:
+            file_descriptor = open(upload_destination, 'wb')
+            file_descriptor.write(file_buffer)
+            file_descriptor.close()
+            
+            #파일 쓰기가 성공했음을 알림
+            client_socket.send("Successfully saved file to %s\r\n" % upload_destination)
+        except:
+            client_socket.send("Failed to save file to %s\r\n" % upload_destination)
+            
+                                
