@@ -175,4 +175,20 @@ def client_handler(client_socket):
         except:
             client_socket.send("Failed to save file to %s\r\n" % upload_destination)
             
-                                
+            #실행할 명령 존재 여부 확인
+            if len(execute):
+                
+                #명령 실핼
+                output = run_command(execute)
+                client_socket.send(output)
+                
+            # 커맨드 셸이 오청된 경우, 또 다른 루트에 진입
+            if command:
+                
+                while True:
+                    # 간단한 프롬프트 출력
+                    client_socket.send("<BHP:#> ")
+                    
+                    #새 줄 문자가 나올때까지 입력 수신(엔터키)
+                    
+                                            
